@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Recruitment Dashboard · Real‑time Data</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #EDEEF2; padding: 24px; }
+
+    .page { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10); max-width: 1100px; margin: 0 auto; }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(120deg, #1E3A5F 0%, #2E5C99 100%);
+      padding: 22px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .header-left h1 { color: #fff; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+    .header-left p  { color: #93B8E0; font-size: 12px; margin-top: 3px; }
+    .header-right   { color: #93B8E0; font-size: 12px; text-align: right; }
+    .header-right b { color: #fff; display: block; font-size: 13px; }
+
+    /* FILTER BAR */
+    .filters {
+      background: #F0F4FA; border-bottom: 1px solid #DDE3EE;
+      padding: 12px 32px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .filter-label { font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.05em; text-transform: uppercase; }
+    .filter-chip {
+      background: #fff; border: 1.5px solid #C7D4EA; border-radius: 8px;
+      padding: 5px 14px; font-size: 12px; font-weight: 600; color: #2E5C99;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .filter-chip span { color: #9CA3AF; font-size: 10px; }
+
+    /* BODY */
+    .body { padding: 24px 32px; background: #F8F9FC; display: flex; flex-direction: column; gap: 20px; }
+
+    /* KPI ROW */
+    .kpi-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .kpi {
+      flex: 1; min-width: 140px;
+      background: #fff; border-radius: 12px; padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border-left: 4px solid #ccc;
+    }
+    .kpi .label { font-size: 11px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+    .kpi .value { font-size: 34px; font-weight: 900; line-height: 1; }
+    .kpi .sub   { font-size: 11px; color: #9CA3AF; margin-top: 5px; }
+    .kpi.purple { border-color: #6366F1; } .kpi.purple .value { color: #6366F1; }
+    .kpi.amber  { border-color: #F59E0B; } .kpi.amber  .value { color: #F59E0B; }
+    .kpi.violet { border-color: #8B5CF6; } .kpi.violet .value { color: #8B5CF6; }
+    .kpi.green  { border-color: #10B981; } .kpi.green  .value { color: #10B981; }
+    .kpi.red    { border-color: #EF4444; } .kpi.red    .value { color: #EF4444; }
+
+    /* CHART ROW */
+    .chart-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 14px; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .card-title { font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+
+    /* PIPELINE BAR */
+    .pipeline-bar { display: flex; height: 30px; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+    .pb-seg { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 800; }
+    .pipeline-legend { display: flex; flex-wrap: wrap; gap: 10px; }
+    .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6B7280; }
+    .leg-dot { width: 9px; height: 9px; border-radius: 3px; }
+
+    /* DONUT */
+    .donut-wrap { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .donut-legend { display: flex; flex-direction: column; gap: 10px; }
+    .donut-item .di-label { font-size: 12px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 6px; }
+    .donut-item .di-val   { font-size: 22px; font-weight: 900; margin-left: 18px; }
+    .donut-item .di-sub   { font-size: 10px; color: #9CA3AF; margin-left: 18px; }
+
+    /* PORTFOLIO BARS */
+    .port-row { display: flex; flex-direction: column; gap: 9px; }
+    .port-item .pi-top { display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .port-item .pi-name { font-size: 12px; font-weight: 600; color: #374151; }
+    .port-item .pi-val  { font-size: 12px; font-weight: 800; color: #111827; }
+    .port-bar-bg { height: 7px; background: #F3F4F6; border-radius: 99px; }
+    .port-bar-fill { height: 100%; border-radius: 99px; }
+
+    /* ALERT */
+    .alert {
+      background: #FEF3C7; border: 1.5px solid #FCD34D; border-radius: 10px;
+      padding: 13px 18px; display: flex; gap: 10px; align-items: flex-start;
+    }
+    .alert-icon { font-size: 16px; margin-top: 1px; }
+    .alert-title { font-size: 12px; font-weight: 800; color: #92400E; margin-bottom: 3px; }
+    .alert-body  { font-size: 12px; color: #78350F; line-height: 1.5; }
+
+    /* TABLE */
+    .table-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .table-header { padding: 14px 20px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; }
+    .table-header .th-title { font-size: 13px; font-weight: 800; color: #111827; }
+    .tab-btns { display: flex; gap: 6px; }
+    .tab-btn { padding: 5px 12px; border-radius: 7px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; }
+    .tab-btn.active { background: #6366F1; color: #fff; }
+    .tab-btn.inactive { background: #F3F4F6; color: #374151; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead tr { background: #F9FAFB; }
+    th { padding: 9px 14px; text-align: left; font-size: 10px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #E5E7EB; white-space: nowrap; }
+    td { padding: 11px 14px; border-bottom: 1px solid #F3F4F6; color: #374151; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #FAFAFA; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 10px; font-weight: 700; }
+    .b-shortlisting { background: #FEF3C7; color: #D97706; }
+    .b-interview    { background: #EDE9FE; color: #7C3AED; }
+    .b-identified   { background: #DBEAFE; color: #1D4ED8; }
+    .b-grade        { background: #EDE9FE; color: #6D28D9; }
+    .candidate-yes  { color: #10B981; font-weight: 700; }
+    .candidate-no   { color: #EF4444; font-size: 11px; }
+
+    .footer {
+      background: #F0F4FA; border-top: 1px solid #DDE3EE;
+      padding: 10px 32px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer p { font-size: 11px; color: #9CA3AF; }
+    .footer b { color: #374151; }
+
+    .looker-tag {
+      display: inline-block; background: #E8F0FE; color: #1967D2;
+      font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 5px;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .live-badge { background: #10B981; color: white; font-size: 10px; border-radius: 99px; padding: 2px 12px; margin-left: 12px; }
+  </style>
+</head>
+<body>
+
+<div style="text-align:center; margin-bottom: 16px;">
+  <div style="font-size:13px; color:#6B7280; font-weight:600;">⚡ Real‑time Recruitment Dashboard · Live Data</div>
+  <div style="font-size:11px; color:#9CA3AF; margin-top:3px;">Simulated live feed – updates every 8 seconds</div>
+</div>
+
+<div class="page" id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Recruitment Tracker — Sales &amp; Marketing <span class="live-badge">● LIVE</span></h1>
+      <p>Lucky Core Industries · HR Dashboard · Auto-refreshes from Google Sheets</p>
+    </div>
+    <div class="header-right">
+      <b>Last Updated</b>
+      <span id="liveTimestamp">June 22, 2026 10:30:00</span>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <span class="filter-label">Filter by →</span>
+    <div class="filter-chip">Grade <span>▾ All</span></div>
+    <div class="filter-chip">Segment <span>▾ All</span></div>
+    <div class="filter-chip">Portfolio <span>▾ All</span></div>
+    <div class="filter-chip">Stage <span>▾ All</span></div>
+    <div style="margin-left:auto; font-size:11px; color:#9CA3AF; font-style:italic;">← live simulation</div>
+  </div>
+
+  <div class="body">
+
+    <!-- KPI ROW -->
+    <div>
+      <span class="looker-tag">Section 1 · Scorecards</span>
+    </div>
+    <div class="kpi-row" id="kpiContainer">
+      <div class="kpi purple">
+        <div class="label">Total Open Positions</div>
+        <div class="value" id="kpiTotal">7</div>
+        <div class="sub">All active vacancies</div>
+      </div>
+      <div class="kpi amber">
+        <div class="label">Grade 33/34 Roles</div>
+        <div class="value" id="kpiGrade34">3</div>
+        <div class="sub">Junior–mid level</div>
+      </div>
+      <div class="kpi violet">
+        <div class="label">Grade 35+ Roles</div>
+        <div class="value" id="kpiGrade35">4</div>
+        <div class="sub">Senior level</div>
+      </div>
+      <div class="kpi green">
+        <div class="label">At Interview Stage</div>
+        <div class="value" id="kpiInterview">4</div>
+        <div class="sub">Candidates in process</div>
+      </div>
+      <div class="kpi red">
+        <div class="label">Needs Candidate</div>
+        <div class="value" id="kpiNeeds">3</div>
+        <div class="sub">No shortlist yet</div>
+      </div>
+    </div>
+
+    <!-- CHART ROW -->
+    <div>
+      <span class="looker-tag">Section 2 · Charts</span>
+    </div>
+    <div class="chart-row">
+
+      <!-- Pipeline -->
+      <div class="card">
+        <div class="card-title">Recruitment Pipeline (Stages)</div>
+        <div class="pipeline-bar" id="pipelineBar">
+          <div class="pb-seg" style="flex:2; background:#F59E0B;" id="segShortlist">2</div>
+          <div class="pb-seg" style="flex:1; background:#3B82F6;" id="segIdentified">1</div>
+          <div class="pb-seg" style="flex:4; background:#8B5CF6;" id="segInterview">4</div>
+        </div>
+        <div class="pipeline-legend">
+          <div class="leg"><div class="leg-dot" style="background:#F59E0B"></div>Shortlisting (<span id="legShort">2</span>)</div>
+          <div class="leg"><div class="leg-dot" style="background:#3B82F6"></div>Candidate ID'd (<span id="legIdent">1</span>)</div>
+          <div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>Interview (<span id="legInterv">4</span>)</div>
+        </div>
+      </div>
+
+      <!-- Donut -->
+      <div class="card">
+        <div class="card-title">By Grade Band</div>
+        <div class="donut-wrap">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="34" fill="none" stroke="#F3F4F6" stroke-width="14"/>
+            <circle id="donutA" cx="45" cy="45" r="34" fill="none" stroke="#6366F1" stroke-width="14" stroke-dasharray="91 214" transform="rotate(-90 45 45)"/>
+            <circle id="donutB" cx="45" cy="45" r="34" fill="none" stroke="#F59E0B" stroke-width="14" stroke-dasharray="123 214" stroke-dashoffset="-91" transform="rotate(-90 45 45)"/>
+            <text x="45" y="49" text-anchor="middle" font-size="16" font-weight="900" fill="#111827" id="donutTotal">7</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="donut-item">
+              <div class="di-label"><div style="width:10px;height:10px;background:#6366F1;border-radius:3px"></div>33/34</div>
+              <div class="di-val" style="color:#6366F1" id="donutValA">3</div>
+              <div class="di-sub" id="donutSubA">43%</div>
+            </div>
+            <div class="donut-item">
+              <div class="di-label"><div style="width:10px;height:10px;background:#F59E0B;border-radius:3px"></div>35+</div>
+              <div class="di-val" style="color:#F59E0B" id="donutValB">4</div>
+              <div class="di-sub" id="donutSubB">57%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio -->
+      <div class="card">
+        <div class="card-title">Open Roles by Portfolio</div>
+        <div class="port-row" id="portfolioBars">
+          <div class="port-item"><div class="pi-top"><span class="pi-name">Cardio</span><span class="pi-val">2</span></div><div class="port-bar-bg"><div class="port-bar-fill" style="width:100%;background:#6366F1"></div></div></div>
+          <div class="port-item"><div class="pi-top"><span class="pi-name">Oncology</span><span class="pi-val">1</span></div><div class="port-bar-bg"><div class="port-bar-fill" style="width:50%;background:#F59E0B"></div></div></div>
+          <div class="port-item"><div class="pi-top"><span class="pi-name">Gastro</span><span class="pi-val">1</span></div><div class="port-bar-bg"><div class="port-bar-fill" style="width:50%;background:#10B981"></div></div></div>
+          <div class="port-item"><div class="pi-top"><span class="pi-name">Trade</span><span class="pi-val">1</span></div><div class="port-bar-bg"><div class="port-bar-fill" style="width:50%;background:#3B82F6"></div></div></div>
+          <div class="port-item"><div class="pi-top"><span class="pi-name">Pain</span><span class="pi-val">1</span></div><div class="port-bar-bg"><div class="port-bar-fill" style="width:50%;background:#EC4899"></div></div></div>
+          <div class="port-item"><div class="pi-top"><span class="pi-name">Mucain</span><span class="pi-val">1</span></div><div class="port-bar-bg"><div class="port-bar-fill" style="width:50%;background:#EF4444"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERT -->
+    <div class="alert" id="alertBox">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <div class="alert-title">Immediate Actions Required</div>
+        <div class="alert-body" id="alertText">
+          <b>PM – Oncology:</b> Candidate salary out of range. HR to revert by 18–19 Jun. &nbsp;|&nbsp;
+          <b>NSM – Mucain (Karachi):</b> Next interviews to be aligned with COO via Corp. TA.
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div>
+      <span class="looker-tag">Section 3 · Detail Table</span>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="th-title">All Open Positions <span style="font-weight:400;color:#6B7280;font-size:11px;margin-left:8px;">(live rows)</span></div>
+        <div class="tab-btns">
+          <div class="tab-btn active">All</div>
+          <div class="tab-btn inactive">Grade 33/34</div>
+          <div class="tab-btn inactive">Grade 35+</div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Position</th><th>Segment</th><th>Grade</th><th>Portfolio</th><th>Location</th><th>Candidate</th><th>Stage</th><th>Next Action</th></tr></thead>
+        <tbody id="tableBody">
+          <!-- injected by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>Data source: <b>Google Sheets — Recruitment Tracker</b> · Refreshes every 8s (simulated)</p>
+    <p>Built in <b>Google Looker Studio</b> · Lucky Core Industries HR</p>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- BASE DATA -----
+    const basePositions = [
+      { id:1, position:'Product Manager', segment:'Marketing', grade:'33/34', portfolio:'Oncology', location:'Head Office', candidate:'Tooba Ahmed', stage:'Candidate ID\'d', next:'HR to revert by 18-19 Jun ⚠️' },
+      { id:2, position:'Product Manager', segment:'Marketing', grade:'33/34', portfolio:'Trade', location:'Head Office', candidate:null, stage:'Shortlisting', next:'Shortlisting in process' },
+      { id:3, position:'Product Manager', segment:'Marketing', grade:'33/34', portfolio:'Pain', location:'Head Office', candidate:null, stage:'Shortlisting', next:'Shortlisting in process' },
+      { id:4, position:'Group Product Manager', segment:'Marketing', grade:'35', portfolio:'Cardio', location:'Head Office', candidate:'Ammad Shafqat', stage:'Interview', next:'In process with Corp. TA' },
+      { id:5, position:'Group Product Manager', segment:'Marketing', grade:'35', portfolio:'Gastro', location:'Head Office', candidate:'Maira Khan', stage:'Interview', next:'Interview coordinated with Atif' },
+      { id:6, position:'Business Head – CM', segment:'Commercial', grade:'36', portfolio:'Cardio', location:'Head Office', candidate:'Tariq Majeed', stage:'Interview', next:'Talent mapping in process' },
+      { id:7, position:'National Sales Manager', segment:'Chronic Care', grade:'35TR', portfolio:'Mucain', location:'Karachi', candidate:null, stage:'Interview', next:'Align next interview with COO ⚠️' }
+    ];
+
+    // stage categories
+    const stageMap = {
+      'Shortlisting': 'shortlist',
+      'Candidate ID\'d': 'identified',
+      'Interview': 'interview'
+    };
+
+    // helpers
+    function getStageCounts(positions) {
+      let short=0, ident=0, inter=0;
+      positions.forEach(p => {
+        if (p.stage === 'Shortlisting') short++;
+        else if (p.stage === 'Candidate ID\'d') ident++;
+        else if (p.stage === 'Interview') inter++;
+      });
+      return { short, ident, inter };
+    }
+
+    function getGradeCounts(positions) {
+      let g34=0, g35=0;
+      positions.forEach(p => {
+        const g = p.grade;
+        if (g === '33/34' || g === '34') g34++;
+        else g35++;
+      });
+      return { g34, g35 };
+    }
+
+    function getPortfolioCounts(positions) {
+      const map = {};
+      positions.forEach(p => { map[p.portfolio] = (map[p.portfolio]||0)+1; });
+      return map;
+    }
+
+    function getNeedsCandidate(positions) {
+      return positions.filter(p => !p.candidate || p.candidate === '— Not yet').length;
+    }
+
+    function getInterviewCount(positions) {
+      return positions.filter(p => p.stage === 'Interview').length;
+    }
+
+    // ----- RENDER TABLE -----
+    function renderTable(positions) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = positions.map((p, idx) => {
+        const cand = p.candidate ? `<span class="candidate-yes">${p.candidate}</span>` : `<span class="candidate-no">— Not yet</span>`;
+        const stageBadge = p.stage === 'Shortlisting' ? 'b-shortlisting' : (p.stage === 'Candidate ID\'d' ? 'b-identified' : 'b-interview');
+        const gradeBadge = 'b-grade';
+        return `<tr>
+          <td>${p.id}</td>
+          <td><b>${p.position}</b></td>
+          <td>${p.segment}</td>
+          <td><span class="badge ${gradeBadge}">${p.grade}</span></td>
+          <td>${p.portfolio}</td>
+          <td>${p.location}</td>
+          <td>${cand}</td>
+          <td><span class="badge ${stageBadge}">${p.stage}</span></td>
+          <td>${p.next}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ----- UPDATE DASHBOARD -----
+    function updateDashboard() {
+      // 1. randomly tweak data: shift candidate, stage, etc.
+      const positions = JSON.parse(JSON.stringify(basePositions));
+      
+      // randomize: flip candidate for one position (if null -> add name, if name -> maybe remove)
+      const idx = Math.floor(Math.random() * positions.length);
+      const p = positions[idx];
+      if (p.candidate) {
+        if (Math.random() > 0.6) p.candidate = null;  // remove
+        else p.candidate = p.candidate + ' ✦'; // just a tiny change
+      } else {
+        const names = ['Sana Ali', 'Zara Khan', 'Omar Farooq', 'Hassan Raza', 'Nadia Qureshi'];
+        p.candidate = names[Math.floor(Math.random() * names.length)];
+      }
+      // randomize stage for another
+      const idx2 = (idx + 3) % positions.length;
+      const stages = ['Shortlisting', 'Candidate ID\'d', 'Interview'];
+      const current = stages.indexOf(positions[idx2].stage);
+      let nextStage = stages[(current + 1) % 3];
+      if (Math.random() > 0.5) positions[idx2].stage = nextStage;
+      
+      // update next action for one
+      const idx3 = (idx + 5) % positions.length;
+      const actions = ['HR to revert soon', 'Interview scheduled', 'Offer stage', 'Talent mapping', 'Panel review'];
+      positions[idx3].next = actions[Math.floor(Math.random() * actions.length)] + ' ⚡';
+
+      // 2. compute KPIs
+      const total = positions.length;
+      const { g34, g35 } = getGradeCounts(positions);
+      const interviewCount = getInterviewCount(positions);
+      const needs = getNeedsCandidate(positions);
+      const { short, ident, inter } = getStageCounts(positions);
+      const portfolioCounts = getPortfolioCounts(positions);
+
+      // 3. update KPI
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiGrade34').textContent = g34;
+      document.getElementById('kpiGrade35').textContent = g35;
+      document.getElementById('kpiInterview').textContent = interviewCount;
+      document.getElementById('kpiNeeds').textContent = needs;
+
+      // 4. pipeline bar + legend
+      const totalSeg = short + ident + inter || 1;
+      document.getElementById('segShortlist').style.flex = short;
+      document.getElementById('segIdentified').style.flex = ident;
+      document.getElementById('segInterview').style.flex = inter;
+      document.getElementById('segShortlist').textContent = short;
+      document.getElementById('segIdentified').textContent = ident;
+      document.getElementById('segInterview').textContent = inter;
+      document.getElementById('legShort').textContent = short;
+      document.getElementById('legIdent').textContent = ident;
+      document.getElementById('legInterv').textContent = inter;
+
+      // 5. donut
+      const totalDonut = g34 + g35 || 1;
+      const p34 = Math.round((g34 / totalDonut) * 100);
+      const p35 = 100 - p34;
+      const circum = 214; // 2*pi*34
+      const dashA = (g34 / totalDonut) * circum;
+      const dashB = (g35 / totalDonut) * circum;
+      document.getElementById('donutA').setAttribute('stroke-dasharray', `${dashA} ${circum}`);
+      document.getElementById('donutB').setAttribute('stroke-dasharray', `${dashB} ${circum}`);
+      document.getElementById('donutTotal').textContent = totalDonut;
+      document.getElementById('donutValA').textContent = g34;
+      document.getElementById('donutValB').textContent = g35;
+      document.getElementById('donutSubA').textContent = p34 + '%';
+      document.getElementById('donutSubB').textContent = p35 + '%';
+
+      // 6. portfolio bars (update counts)
+      const portContainer = document.getElementById('portfolioBars');
+      const portfolios = ['Cardio','Oncology','Gastro','Trade','Pain','Mucain'];
+      const colors = ['#6366F1','#F59E0B','#10B981','#3B82F6','#EC4899','#EF4444'];
+      portContainer.innerHTML = portfolios.map((port, i) => {
+        const count = portfolioCounts[port] || 0;
+        const max = Math.max(...Object.values(portfolioCounts), 1);
+        const pct = Math.round((count / max) * 100);
+        return `<div class="port-item">
+          <div class="pi-top"><span class="pi-name">${port}</span><span class="pi-val">${count}</span></div>
+          <div class="port-bar-bg"><div class="port-bar-fill" style="width:${pct}%;background:${colors[i]}"></div></div>
+        </div>`;
+      }).join('');
+
+      // 7. alert text (update with random flag)
+      const alerts = [
+        '<b>PM – Oncology:</b> Candidate salary out of range. HR to revert by 18–19 Jun. &nbsp;|&nbsp; <b>NSM – Mucain (Karachi):</b> Next interviews to be aligned with COO via Corp. TA.',
+        '<b>Gastro – GPM:</b> Panel interview confirmed for next week. &nbsp;|&nbsp; <b>Trade – PM:</b> Shortlist ready for review.',
+        '<b>Cardio – Business Head:</b> Final round scheduled with CEO. &nbsp;|&nbsp; <b>Pain – PM:</b> Offer in progress.',
+        '<b>Oncology – PM:</b> Candidate declined. Re-opening. &nbsp;|&nbsp; <b>Mucain – NSM:</b> COO alignment done.'
+      ];
+      document.getElementById('alertText').innerHTML = alerts[Math.floor(Math.random() * alerts.length)];
+
+      // 8. table
+      renderTable(positions);
+
+      // 9. timestamp
+      const now = new Date();
+      document.getElementById('liveTimestamp').textContent = now.toLocaleString('en-US', { hour12: false });
+    }
+
+    // initial render
+    updateDashboard();
+
+    // set interval
+    setInterval(updateDashboard, 8000);
+  })();
+</script>
+</body>
+</html>
